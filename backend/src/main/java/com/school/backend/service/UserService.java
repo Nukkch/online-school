@@ -1,5 +1,6 @@
 package com.school.backend.service;
 
+import com.school.backend.dto.AuthResponse;
 import com.school.backend.dto.LoginRequest;
 import com.school.backend.dto.RegistrationRequest;
 import com.school.backend.entity.Role;
@@ -34,17 +35,20 @@ public class UserService {
     }
 
     // Новый метод для логина
-    public String login(LoginRequest request) {
-        // 1. Ищем пользователя по email
+        public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // 2. Проверяем пароль
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Неверный пароль");
         }
 
-        // 3. Генерируем и возвращаем токен
-        return jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getEmail());
+        
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
     }
 }
