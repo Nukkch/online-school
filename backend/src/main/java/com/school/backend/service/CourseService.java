@@ -3,9 +3,11 @@ package com.school.backend.service;
 import com.school.backend.dto.CourseCreateRequest;
 import com.school.backend.dto.CourseResponse;
 import com.school.backend.entity.Course;
+import com.school.backend.entity.Enrollment;
 import com.school.backend.entity.User;
 import com.school.backend.repository.CourseRepository;
 import com.school.backend.repository.UserRepository;
+import com.school.backend.repository.EnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final EnrollmentRepository enrollmentRepository;
     // Создание курса при пост запросе
     public CourseResponse createCourse(CourseCreateRequest request) {
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -72,7 +75,7 @@ public class CourseService {
                 .teacherName(teacherName)
                 .build();
     }
-        @Transactional
+            @Transactional
     public void deleteCourse(Long courseId) {
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User teacher = userRepository.findByEmail(currentEmail)
@@ -86,6 +89,11 @@ public class CourseService {
             throw new RuntimeException("Вы не можете удалить этот курс");
         }
 
+        // Сначала удаляем все записи о записях студентов на этот курс
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        enrollmentRepository.deleteAll(enrollments);
+
+        // Теперь удаляем сам курс (модули и уроки удалятся каскадно, если настроено)
         courseRepository.delete(course);
     }
 }
