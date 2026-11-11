@@ -16,7 +16,7 @@ function Login() {
     
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, ...userData } = response.data; // Разделяем токен и данные юзера
+      const { token, ...userData } = response.data;
       setAuth(token, userData);
       navigate('/dashboard');
     } catch (err) {

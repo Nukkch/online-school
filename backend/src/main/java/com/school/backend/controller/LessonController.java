@@ -25,4 +25,9 @@ public class LessonController {
     public ResponseEntity<List<LessonResponse>> getLessonsByModule(@PathVariable Long moduleId) {
         return ResponseEntity.ok(lessonService.getLessonsByModuleId(moduleId));
     }
+        @DeleteMapping("/{lessonId}")
+    public ResponseEntity<String> deleteLesson(@PathVariable Long lessonId) {
+        lessonService.deleteLesson(lessonId);
+        return ResponseEntity.ok("Урок удален");
+    }
 }

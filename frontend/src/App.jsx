@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import CoursePage from './pages/CoursePage';
 import useAuthStore from './store/authStore';
 
 function App() {
@@ -16,7 +17,9 @@ function App() {
           ) : (
             <div>
               <Login />
-          
+              <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <Link to="/register">Нет аккаунта? Зарегистрироваться</Link>
+              </div>
             </div>
           )
         } />
@@ -26,6 +29,10 @@ function App() {
         <Route 
           path="/dashboard" 
           element={token ? <Dashboard /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/courses/:courseId" 
+          element={token ? <CoursePage /> : <Navigate to="/login" />} 
         />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>

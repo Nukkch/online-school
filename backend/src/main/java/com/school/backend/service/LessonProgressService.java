@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +55,16 @@ public class LessonProgressService {
                     .build();
             return mapToResponse(progressRepository.save(newProgress));
         }
+    }
+        @Transactional(readOnly = true)
+    public List<LessonProgressResponse> getProgressByCourseId(Long courseId) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User student = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        
+        return progressRepository.findByStudentIdAndCourseId(student.getId(), courseId).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     private LessonProgressResponse mapToResponse(LessonProgress progress) {

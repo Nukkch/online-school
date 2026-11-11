@@ -33,4 +33,13 @@ public class CourseController {
     public ResponseEntity<List<CourseResponse>> getMyCourses() {
         return ResponseEntity.ok(courseService.getMyCourses());
     }
+        @GetMapping("/{courseId}")
+    public ResponseEntity<CourseResponse> getCourseById(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.getCourseById(courseId));
+    }
+    @DeleteMapping("/{courseId}")
+    public ResponseEntity<String> deleteCourse(@PathVariable Long courseId) {
+        courseService.deleteCourse(courseId);
+        return ResponseEntity.ok("Курс удален");
+    }
 }

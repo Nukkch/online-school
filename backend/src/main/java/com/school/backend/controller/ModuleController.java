@@ -23,6 +23,11 @@ public class ModuleController {
 
     @GetMapping("/course/{courseId}")
     public ResponseEntity<List<ModuleResponse>> getModulesByCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(moduleService.getModulesByCourseId(courseId));
+        return ResponseEntity.ok(moduleService.getModulesByCourseIdWithLessons(courseId));
+    }
+        @DeleteMapping("/{moduleId}")
+    public ResponseEntity<String> deleteModule(@PathVariable Long moduleId) {
+        moduleService.deleteModule(moduleId);
+        return ResponseEntity.ok("Модуль удален");
     }
 }

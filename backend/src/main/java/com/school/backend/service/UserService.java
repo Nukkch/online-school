@@ -48,6 +48,8 @@ public class UserService {
         return AuthResponse.builder()
                 .token(token)
                 .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .role(user.getRole().name())
                 .build();
     }

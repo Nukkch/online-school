@@ -54,14 +54,38 @@ public class CourseService {
                 .map(this::mapToResponse)
                 .toList();
     }
+        @Transactional(readOnly = true)
+    public CourseResponse getCourseById(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Курс не найден"));
+        return mapToResponse(course);
+    }
 
     // Вспомогательный метод для конвертации Entity в DTO
-    private CourseResponse mapToResponse(Course course) {
+        private CourseResponse mapToResponse(Course course) {
+        String teacherName = course.getTeacher().getFirstName() + " " + course.getTeacher().getLastName();
+        
         return CourseResponse.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .teacherEmail(course.getTeacher().getEmail())
+                .teacherName(teacherName)
                 .build();
+    }
+        @Transactional
+    public void deleteCourse(Long courseId) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User teacher = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Курс не найден"));
+
+        // Проверяем, что курс принадлежит текущему преподавателю
+        if (!course.getTeacher().getId().equals(teacher.getId())) {
+            throw new RuntimeException("Вы не можете удалить этот курс");
+        }
+
+        courseRepository.delete(course);
     }
 }

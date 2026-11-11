@@ -64,4 +64,15 @@ public class EnrollmentService {
                         .build())
                 .toList();
     }
+        @Transactional
+    public void unenrollFromCourse(Long courseId) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User student = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        Enrollment enrollment = enrollmentRepository.findByStudentIdAndCourseId(student.getId(), courseId)
+                .orElseThrow(() -> new RuntimeException("Вы не записаны на этот курс"));
+
+        enrollmentRepository.delete(enrollment);
+    }
 }

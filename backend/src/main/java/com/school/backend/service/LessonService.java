@@ -49,4 +49,10 @@ public class LessonService {
                 .moduleId(lesson.getModule().getId())
                 .build();
     }
+        @Transactional
+    public void deleteLesson(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Урок не найден"));
+        lessonRepository.delete(lesson);
+    }
 }

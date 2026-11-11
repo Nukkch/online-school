@@ -26,4 +26,9 @@ public class EnrollmentController {
     public ResponseEntity<List<EnrollmentResponse>> getMyEnrollments() {
         return ResponseEntity.ok(enrollmentService.getMyEnrollments());
     }
+        @DeleteMapping("/courses/{courseId}")
+    public ResponseEntity<String> unenroll(@PathVariable Long courseId) {
+        enrollmentService.unenrollFromCourse(courseId);
+        return ResponseEntity.ok("Вы отписались от курса");
+    }
 }
