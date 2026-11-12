@@ -20,7 +20,7 @@ function CoursePage() {
   const [newModule, setNewModule] = useState({ title: '', description: '', orderIndex: 1 });
   
   const [showLessonForm, setShowLessonForm] = useState(null);
-  const [newLesson, setNewLesson] = useState({ title: '', content: '', orderIndex: 1 });
+  const [newLesson, setNewLesson] = useState({ title: '', content: '', orderIndex: 1, language: 'java', codeTemplate: '' });
 
   // Состояния для редактирования курса
   const [isEditingCourse, setIsEditingCourse] = useState(false);
@@ -327,6 +327,22 @@ function CoursePage() {
                       onChange={(e) => setNewLesson({ ...newLesson, orderIndex: parseInt(e.target.value) })}
                       style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
                     />
+                    <select 
+                        value={newLesson.language}
+                        onChange={(e) => setNewLesson({ ...newLesson, language: e.target.value })}
+                        style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                      >
+                        <option value="java">Java</option>
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                      </select>
+
+                      <textarea 
+                        placeholder="Шаблон кода для песочницы (будет подставлен при открытии урока)" 
+                        value={newLesson.codeTemplate}
+                        onChange={(e) => setNewLesson({ ...newLesson, codeTemplate: e.target.value })}
+                        style={{ width: '100%', padding: '8px', marginBottom: '10px', minHeight: '80px', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                      />
                     <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       Создать урок
                     </button>
@@ -335,10 +351,11 @@ function CoursePage() {
               </div>
             )}
             
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
+                        <ul style={{ listStyleType: 'none', padding: 0 }}>
               {module.lessons?.map(lesson => (
                 <li 
                   key={lesson.id} 
+                  onClick={() => navigate(`/courses/${courseId}/lessons/${lesson.id}`)}
                   style={{ 
                     padding: '15px', 
                     marginBottom: '10px', 
@@ -347,47 +364,62 @@ function CoursePage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    border: '1px solid #ddd'
+                    border: '1px solid #ddd',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ flex: 1 }}>
-                    <strong>{lesson.title}</strong>
-                    <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                      {lesson.content}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+                    {/* Иконка прогресса для студента */}
                     {user.role === 'STUDENT' && isEnrolled && (
-                      <button
-                        onClick={() => handleToggleProgress(lesson.id)}
-                        style={{
-                          padding: '8px 16px',
-                          backgroundColor: progress[lesson.id] ? '#4CAF50' : '#ccc',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {progress[lesson.id] ? '✓ Пройден' : 'Отметить'}
-                      </button>
+                      <span style={{ 
+                        fontSize: '20px', 
+                        color: progress[lesson.id] ? '#4CAF50' : '#ccc' 
+                      }}>
+                        {progress[lesson.id] ? '✅' : '⚪'}
+                      </span>
                     )}
-                    {user.role === 'TEACHER' && (
-                      <button
-                        onClick={() => handleDeleteLesson(module.id, lesson.id)}
-                        style={{
-                          padding: '8px 16px',
-                          backgroundColor: '#f44336',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Удалить
-                      </button>
-                    )}
+                    <div>
+                      <strong>{lesson.title}</strong>
+                      {lesson.language && (
+                        <span style={{ 
+                          marginLeft: '10px', 
+                          padding: '2px 8px', 
+                          backgroundColor: '#e0e0e0', 
+                          borderRadius: '12px', 
+                          fontSize: '12px',
+                          color: '#555'
+                        }}>
+                          {lesson.language}
+                        </span>
+                      )}
+                      <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
+                        {lesson.content ? lesson.content.substring(0, 50) + '...' : 'Нет описания'}
+                      </p>
+                    </div>
                   </div>
+                  
+                  {/* Кнопка удаления только для преподавателя */}
+                  {user.role === 'TEACHER' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Чтобы не срабатывал переход по клику
+                        handleDeleteLesson(module.id, lesson.id);
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Удалить
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

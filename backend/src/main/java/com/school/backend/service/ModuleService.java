@@ -50,6 +50,8 @@ public class ModuleService {
                             .content(lesson.getContent())
                             .orderIndex(lesson.getOrderIndex())
                             .moduleId(lesson.getModule().getId())
+                            .language(lesson.getLanguage())
+                            .codeTemplate(lesson.getCodeTemplate())
                             .build())
                     .toList();
             

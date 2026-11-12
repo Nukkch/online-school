@@ -27,8 +27,8 @@ public class LessonService {
                 .title(request.getTitle())
                 .content(request.getContent())
                 .orderIndex(request.getOrderIndex())
-                .language(request.getLanguage())
-                .codeTemplate(request.getCodeTemplate())
+                .language(request.getLanguage())        
+                .codeTemplate(request.getCodeTemplate()) 
                 .module(module)
                 .build();
 
@@ -49,6 +49,8 @@ public class LessonService {
                 .content(lesson.getContent())
                 .orderIndex(lesson.getOrderIndex())
                 .moduleId(lesson.getModule().getId())
+                .language(lesson.getLanguage())        
+                .codeTemplate(lesson.getCodeTemplate()) 
                 .build();
     }
         @Transactional
@@ -56,5 +58,11 @@ public class LessonService {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Урок не найден"));
         lessonRepository.delete(lesson);
+    }
+        @Transactional(readOnly = true)
+    public LessonResponse getLessonById(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Урок не найден"));
+        return mapToResponse(lesson);
     }
 }

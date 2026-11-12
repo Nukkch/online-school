@@ -30,4 +30,8 @@ public class LessonController {
         lessonService.deleteLesson(lessonId);
         return ResponseEntity.ok("Урок удален");
     }
+        @GetMapping("/{lessonId}")
+    public ResponseEntity<LessonResponse> getLessonById(@PathVariable Long lessonId) {
+        return ResponseEntity.ok(lessonService.getLessonById(lessonId));
+    }
 }

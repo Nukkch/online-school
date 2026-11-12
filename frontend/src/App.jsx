@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import CreateCourse from './pages/CreateCourse';
 import CoursePage from './pages/CoursePage';
 import useAuthStore from './store/authStore';
+import LessonPage from './pages/LessonPage';
 
 function App() {
   const token = useAuthStore((state) => state.token);
@@ -42,6 +43,11 @@ function App() {
           element={token ? <CoursePage /> : <Navigate to="/login" />} 
         />
         <Route path="*" element={<Navigate to="/login" />} />
+        
+        <Route 
+          path="/courses/:courseId/lessons/:lessonId" 
+          element={token ? <LessonPage /> : <Navigate to="/login" />} 
+        />
       </Routes>
     </BrowserRouter>
   );
