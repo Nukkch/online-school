@@ -2,6 +2,7 @@ package com.school.backend.controller;
 
 import com.school.backend.dto.CourseCreateRequest;
 import com.school.backend.dto.CourseResponse;
+import com.school.backend.dto.CourseStatisticsResponse;
 import com.school.backend.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,5 +42,15 @@ public class CourseController {
     public ResponseEntity<String> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.ok("Курс удален");
+    }
+    @GetMapping("/{courseId}/statistics")
+    public ResponseEntity<CourseStatisticsResponse> getCourseStatistics(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.getCourseStatistics(courseId));
+    }
+    @PutMapping("/{courseId}")
+    public ResponseEntity<CourseResponse> updateCourse(
+            @PathVariable Long courseId, 
+            @RequestBody CourseCreateRequest request) {
+        return ResponseEntity.ok(courseService.updateCourse(courseId, request));
     }
 }

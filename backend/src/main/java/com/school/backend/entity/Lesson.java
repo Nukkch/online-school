@@ -26,6 +26,12 @@ public class Lesson {
 
     @Column(name = "order_index")
     private Integer orderIndex; // Порядок урока внутри модуля
+    // Поля для песочницы
+    private String language; // java, python, javascript
+
+    @Column(columnDefinition = "TEXT")
+    private String codeTemplate; // стартовый код в песочнице
+
 
     // Связь: Много уроков могут быть в одном модуле
     @ManyToOne(fetch = FetchType.LAZY)

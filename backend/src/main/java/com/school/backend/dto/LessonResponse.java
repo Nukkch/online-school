@@ -15,4 +15,6 @@ public class LessonResponse {
     private String content;
     private Integer orderIndex;
     private Long moduleId;
+    private String language;
+    private String codeTemplate;
 }

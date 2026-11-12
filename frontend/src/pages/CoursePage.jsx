@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
-
+import CourseStatistics from '../components/CourseStatistics';
 
 function CoursePage() {
   const { courseId } = useParams();
@@ -19,11 +19,14 @@ function CoursePage() {
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [newModule, setNewModule] = useState({ title: '', description: '', orderIndex: 1 });
   
-  const [showLessonForm, setShowLessonForm] = useState(null); // ID модуля, для которого открыта форма
+  const [showLessonForm, setShowLessonForm] = useState(null);
   const [newLesson, setNewLesson] = useState({ title: '', content: '', orderIndex: 1 });
 
+  // Состояния для редактирования курса
+  const [isEditingCourse, setIsEditingCourse] = useState(false);
+  const [editCourseData, setEditCourseData] = useState({ title: '', description: '' });
 
-      useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const courseResponse = await api.get(`/courses/${courseId}`);
@@ -119,9 +122,9 @@ function CoursePage() {
       await api.post('/modules', { ...newModule, courseId: parseInt(courseId) });
       setShowModuleForm(false);
       setNewModule({ title: '', description: '', orderIndex: modules.length + 1 });
-      // Перезагружаем данные курса
-        const modulesResponse = await api.get(`/modules/course/${courseId}`);
-        setModules(modulesResponse.data); // Перезагружаем данные
+      
+      const modulesResponse = await api.get(`/modules/course/${courseId}`);
+      setModules(modulesResponse.data);
     } catch (err) {
       alert(err.response?.data?.message || 'Ошибка создания модуля');
     }
@@ -133,11 +136,24 @@ function CoursePage() {
       await api.post('/lessons', { ...newLesson, moduleId });
       setShowLessonForm(null);
       setNewLesson({ title: '', content: '', orderIndex: 1 });
-      // Перезагружаем данные курса
-        const modulesResponse = await api.get(`/modules/course/${courseId}`);
-        setModules(modulesResponse.data);
+      
+      const modulesResponse = await api.get(`/modules/course/${courseId}`);
+      setModules(modulesResponse.data);
     } catch (err) {
       alert(err.response?.data?.message || 'Ошибка создания урока');
+    }
+  };
+
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/courses/${courseId}`, editCourseData);
+      setIsEditingCourse(false);
+      
+      const courseResponse = await api.get(`/courses/${courseId}`);
+      setCourse(courseResponse.data);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Ошибка обновления курса');
     }
   };
 
@@ -153,21 +169,61 @@ function CoursePage() {
         ← Назад к курсам
       </button>
 
-      <h1>{course.title}</h1>
-      <p style={{ color: '#666' }}>{course.description}</p>
+      {/* Блок заголовка курса с возможностью редактирования */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        {!isEditingCourse ? (
+          <div>
+            <h1 style={{ margin: 0 }}>{course.title}</h1>
+            <p style={{ color: '#666', margin: '10px 0 0 0' }}>{course.description}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleUpdateCourse} style={{ width: '100%' }}>
+            <input 
+              value={editCourseData.title}
+              onChange={(e) => setEditCourseData({ ...editCourseData, title: e.target.value })}
+              required
+              style={{ width: '100%', padding: '8px', marginBottom: '10px', fontSize: '24px', fontWeight: 'bold', boxSizing: 'border-box' }}
+            />
+            <textarea 
+              value={editCourseData.description}
+              onChange={(e) => setEditCourseData({ ...editCourseData, description: e.target.value })}
+              required
+              rows="3"
+              style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="submit" style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                Сохранить
+              </button>
+              <button type="button" onClick={() => setIsEditingCourse(false)} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                Отмена
+              </button>
+            </div>
+          </form>
+        )}
+        
+        {user.role === 'TEACHER' && !isEditingCourse && (
+          <button 
+            onClick={() => {
+              setEditCourseData({ title: course.title, description: course.description });
+              setIsEditingCourse(true);
+            }}
+            style={{ padding: '8px 16px', backgroundColor: '#FF9800', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: '20px' }}
+          >
+            ✏️ Редактировать
+          </button>
+        )}
+      </div>
+
+      {/* Статистика для преподавателя */}
+      {user.role === 'TEACHER' && (
+        <CourseStatistics courseId={courseId} />
+      )}
 
       {user.role === 'STUDENT' && !isEnrolled && (
         <button 
           onClick={handleEnroll}
-          style={{ 
-            padding: '12px 24px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
+          style={{ padding: '12px 24px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}
         >
           Записаться на курс
         </button>
@@ -176,15 +232,7 @@ function CoursePage() {
       {user.role === 'STUDENT' && isEnrolled && (
         <button 
           onClick={handleUnenroll}
-          style={{ 
-            padding: '12px 24px', 
-            backgroundColor: '#f44336', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
+          style={{ padding: '12px 24px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}
         >
           Отписаться от курса
         </button>
@@ -194,14 +242,7 @@ function CoursePage() {
         <div style={{ marginBottom: '20px' }}>
           <button 
             onClick={() => setShowModuleForm(!showModuleForm)}
-            style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#2196F3', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            style={{ padding: '12px 24px', backgroundColor: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             {showModuleForm ? 'Отмена' : '+ Добавить модуль'}
           </button>
@@ -214,20 +255,20 @@ function CoursePage() {
                 value={newModule.title}
                 onChange={(e) => setNewModule({ ...newModule, title: e.target.value })}
                 required
-                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
               />
               <textarea 
                 placeholder="Описание" 
                 value={newModule.description}
                 onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
-                style={{ width: '100%', padding: '8px', marginBottom: '10px', minHeight: '60px' }}
+                style={{ width: '100%', padding: '8px', marginBottom: '10px', minHeight: '60px', boxSizing: 'border-box' }}
               />
               <input 
                 type="number"
                 placeholder="Порядковый номер" 
                 value={newModule.orderIndex}
                 onChange={(e) => setNewModule({ ...newModule, orderIndex: parseInt(e.target.value) })}
-                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
               />
               <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                 Создать модуль
@@ -271,20 +312,20 @@ function CoursePage() {
                       value={newLesson.title}
                       onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
                       required
-                      style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                      style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
                     />
                     <textarea 
                       placeholder="Содержание урока" 
                       value={newLesson.content}
                       onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
-                      style={{ width: '100%', padding: '8px', marginBottom: '10px', minHeight: '80px' }}
+                      style={{ width: '100%', padding: '8px', marginBottom: '10px', minHeight: '80px', boxSizing: 'border-box' }}
                     />
                     <input 
                       type="number"
                       placeholder="Порядковый номер" 
                       value={newLesson.orderIndex}
                       onChange={(e) => setNewLesson({ ...newLesson, orderIndex: parseInt(e.target.value) })}
-                      style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                      style={{ width: '100%', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }}
                     />
                     <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       Создать урок

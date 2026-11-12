@@ -2,12 +2,18 @@ package com.school.backend.service;
 
 import com.school.backend.dto.CourseCreateRequest;
 import com.school.backend.dto.CourseResponse;
+import com.school.backend.dto.CourseStatisticsResponse;
 import com.school.backend.entity.Course;
 import com.school.backend.entity.Enrollment;
+import com.school.backend.entity.LessonProgress;
+import com.school.backend.entity.Module;
 import com.school.backend.entity.User;
 import com.school.backend.repository.CourseRepository;
-import com.school.backend.repository.UserRepository;
 import com.school.backend.repository.EnrollmentRepository;
+import com.school.backend.repository.LessonProgressRepository;
+import com.school.backend.repository.LessonRepository;
+import com.school.backend.repository.ModuleRepository;
+import com.school.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -22,6 +28,9 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final ModuleRepository moduleRepository;
+    private final LessonRepository lessonRepository;
+    private final LessonProgressRepository lessonProgressRepository;
     // Создание курса при пост запросе
     public CourseResponse createCourse(CourseCreateRequest request) {
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -95,5 +104,72 @@ public class CourseService {
 
         // Теперь удаляем сам курс (модули и уроки удалятся каскадно, если настроено)
         courseRepository.delete(course);
+    }
+        @Transactional(readOnly = true)
+    public CourseStatisticsResponse getCourseStatistics(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Курс не найден"));
+
+        // Получаем всех студентов, записанных на курс
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        
+        // Получаем все уроки курса и считаем их количество
+        List<Module> modules = moduleRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+        int totalLessons = 0;
+        for (Module module : modules) {
+            totalLessons += lessonRepository.findByModuleIdOrderByOrderIndexAsc(module.getId()).size();
+        }
+        // Теперь totalLessons не изменяется — она effectively final
+        
+        final int finalTotalLessons = totalLessons; // На всякий случай создаем финальную копию
+
+        // Для каждого студента считаем прогресс
+        List<CourseStatisticsResponse.StudentProgressDTO> studentProgressList = enrollments.stream()
+                .map(enrollment -> {
+                    User student = enrollment.getStudent();
+                    List<LessonProgress> progress = lessonProgressRepository
+                            .findByStudentIdAndCourseId(student.getId(), courseId);
+                    int completedLessons = (int) progress.stream()
+                            .filter(LessonProgress::getCompleted)
+                            .count();
+                    double progressPercentage = finalTotalLessons > 0 
+                            ? (completedLessons * 100.0 / finalTotalLessons) 
+                            : 0;
+
+                    return CourseStatisticsResponse.StudentProgressDTO.builder()
+                            .studentId(student.getId())
+                            .studentName(student.getFirstName() + " " + student.getLastName())
+                            .studentEmail(student.getEmail())
+                            .completedLessons(completedLessons)
+                            .progressPercentage(Math.round(progressPercentage * 10.0) / 10.0)
+                            .build();
+                })
+                .toList();
+
+        return CourseStatisticsResponse.builder()
+                .courseId(course.getId())
+                .courseTitle(course.getTitle())
+                .totalStudents(enrollments.size())
+                .totalLessons(finalTotalLessons)
+                .students(studentProgressList)
+                .build();
+    }
+        @Transactional
+    public CourseResponse updateCourse(Long courseId, CourseCreateRequest request) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User teacher = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Курс не найден"));
+
+        if (!course.getTeacher().getId().equals(teacher.getId())) {
+            throw new RuntimeException("Вы не можете редактировать этот курс");
+        }
+
+        course.setTitle(request.getTitle());
+        course.setDescription(request.getDescription());
+
+        return mapToResponse(courseRepository.save(course));
     }
 }

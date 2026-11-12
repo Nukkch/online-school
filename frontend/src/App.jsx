@@ -2,19 +2,19 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import CreateCourse from './pages/CreateCourse';
 import CoursePage from './pages/CoursePage';
 import useAuthStore from './store/authStore';
 
 function App() {
   const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={
-          token ? (
-            <Navigate to="/dashboard" />
-          ) : (
+          token ? <Navigate to="/dashboard" /> : (
             <div>
               <Login />
               <div style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -29,6 +29,13 @@ function App() {
         <Route 
           path="/dashboard" 
           element={token ? <Dashboard /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/create-course" 
+          element={
+            // Разрешаем доступ только если залогинен и роль TEACHER
+            (token && user?.role === 'TEACHER') ? <CreateCourse /> : <Navigate to="/dashboard" />
+          } 
         />
         <Route 
           path="/courses/:courseId" 

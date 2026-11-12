@@ -27,6 +27,8 @@ public class LessonService {
                 .title(request.getTitle())
                 .content(request.getContent())
                 .orderIndex(request.getOrderIndex())
+                .language(request.getLanguage())
+                .codeTemplate(request.getCodeTemplate())
                 .module(module)
                 .build();
 
