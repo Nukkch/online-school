@@ -80,17 +80,6 @@ function CoursePage() {
     }
   };
 
-  const handleToggleProgress = async (lessonId) => {
-    try {
-      const response = await api.post(`/progress/lessons/${lessonId}`);
-      setProgress(prev => ({
-        ...prev,
-        [lessonId]: response.data.completed
-      }));
-    } catch (err) {
-      console.error('Ошибка обновления прогресса:', err);
-    }
-  };
 
   const handleDeleteModule = async (moduleId) => {
     if (!window.confirm('Удалить модуль и все его уроки?')) return;
@@ -351,7 +340,7 @@ function CoursePage() {
               </div>
             )}
             
-                        <ul style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
               {module.lessons?.map(lesson => (
                 <li 
                   key={lesson.id} 
