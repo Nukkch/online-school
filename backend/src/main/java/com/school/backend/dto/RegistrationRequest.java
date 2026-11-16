@@ -8,5 +8,5 @@ public class RegistrationRequest {
     private String password;
     private String firstName;
     private String lastName;
-    private String role; // Фронтенд будет отправлять строку, например "STUDENT"
+    private String role; // Фронтенд будет отправлять строку
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
+import { truncateText } from '../utils/textUtils';
 
 function CourseList() {
   const [courses, setCourses] = useState([]);
@@ -62,8 +63,8 @@ function CourseList() {
               }}
             >
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 10px 0' }}>{course.title}</h4>
-                <p style={{ margin: 0, color: '#666' }}>{course.description}</p>
+                <h4 style={{ margin: '0 0 10px 0' }}>{truncateText(course.title, 40)}</h4>
+                <p style={{ margin: 0, color: '#666' }}>{truncateText(course.description, 60)}</p>
                 {user.role === 'STUDENT' && (
                   <p style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
                     Преподаватель: {course.teacherName}

@@ -1,16 +1,40 @@
-# React + Vite
+Веб-приложение онлайн-школы программирования с интерактивной песочницей для выполнения кода.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+Технологический стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Java 17, Spring Boot, Spring Security, PostgreSQL
+React, Vite, Monaco Editor (VS Code engine)
+JDoodle API (Cloud)
+Docker 
 
-## React Compiler
+---------------------------------------------------------
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Запуск проекта
 
-## Expanding the ESLint configuration
+!!!Перед запуском убедитесь, что у вас установлен PostgreSQL!!!
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+в корне проекта:    docker-compose up -d 
+         
+cd backend:         Для Windows:
+                    .\gradlew.bat bootRun
+                    Для macOS/Linux:
+                    ./gradlew bootRun
+
+cd frontend:        npm install
+                    npm run dev
+
+http://localhost:5173/
+
+---------------------------------------------------------
+
+Аккаунты
+
+Преподаватель:  teacher@test.com : password123
+
+Ученик:         student@test.com : password123
+
+---------------------------------------------------------
+
+примечание по выполнению кода: у апишки лимит на 20 выполнений в день, не злоупотрбляйте пж ;Р
+если по каким то причинам лимит кончился, зарегайтесь на https://www.jdoodle.com/compiler-api?spm=a2ty_o01.29997173.0.0.24b5c9215vCREg, получите ключи в профиле и замените их в файле online-school\backend\src\main\resources\application.properties(Обязательно заменить ОБА ключа)

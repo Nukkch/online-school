@@ -1,7 +1,6 @@
 package com.school.backend.controller;
 
 import com.school.backend.dto.EnrollmentResponse;
-import com.school.backend.entity.Enrollment;
 import com.school.backend.service.EnrollmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +25,8 @@ public class EnrollmentController {
     public ResponseEntity<List<EnrollmentResponse>> getMyEnrollments() {
         return ResponseEntity.ok(enrollmentService.getMyEnrollments());
     }
-        @DeleteMapping("/courses/{courseId}")
+
+    @DeleteMapping("/courses/{courseId}")
     public ResponseEntity<String> unenroll(@PathVariable Long courseId) {
         enrollmentService.unenrollFromCourse(courseId);
         return ResponseEntity.ok("Вы отписались от курса");

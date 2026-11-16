@@ -26,6 +26,7 @@ public class Lesson {
 
     @Column(name = "order_index")
     private Integer orderIndex; // Порядок урока внутри модуля
+    
     // Поля для песочницы
     private String language; // java, python, javascript
 

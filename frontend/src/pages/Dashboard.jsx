@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import CourseList from '../components/CourseList';
 
+
 function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -41,9 +42,7 @@ function Dashboard() {
         </button>
       )}
       
-      {/* Добавляем ключ key={Date.now()} не будем, просто сделаем простой рендер. 
-          Чтобы список обновился после создания, можно использовать простой хак с перерисовкой, 
-          но для начала хватит и того, что курс появится после обновления страницы. */}
+      {}
       <CourseList />
     </div>
   );

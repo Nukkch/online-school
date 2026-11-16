@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -18,9 +18,6 @@ function App() {
           token ? <Navigate to="/dashboard" /> : (
             <div>
               <Login />
-              <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                <Link to="/register">Нет аккаунта? Зарегистрироваться</Link>
-              </div>
             </div>
           )
         } />

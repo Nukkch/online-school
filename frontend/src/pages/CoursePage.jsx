@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import CourseStatistics from '../components/CourseStatistics';
+import { truncateText } from '../utils/textUtils';
 
 function CoursePage() {
   const { courseId } = useParams();
@@ -162,8 +163,8 @@ function CoursePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         {!isEditingCourse ? (
           <div>
-            <h1 style={{ margin: 0 }}>{course.title}</h1>
-            <p style={{ color: '#666', margin: '10px 0 0 0' }}>{course.description}</p>
+            <h1 style={{ margin: 0 }}>{truncateText(course.title, 25)}</h1>
+            <p style={{ color: '#666', margin: '10px 0 0 0' }}>{truncateText(course.description, 40)}</p>
           </div>
         ) : (
           <form onSubmit={handleUpdateCourse} style={{ width: '100%' }}>
@@ -199,7 +200,7 @@ function CoursePage() {
             }}
             style={{ padding: '8px 16px', backgroundColor: '#FF9800', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: '20px' }}
           >
-            ✏️ Редактировать
+            Редактировать
           </button>
         )}
       </div>
@@ -273,7 +274,7 @@ function CoursePage() {
         modules.map(module => (
           <div key={module.id} style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ddd', paddingBottom: '10px' }}>
-              <h2 style={{ margin: 0 }}>{module.title}</h2>
+              <h2 style={{ margin: 0 }}>{truncateText(module.title, 40)}</h2>
               {user.role === 'TEACHER' && (
                 <button
                   onClick={() => handleDeleteModule(module.id)}
@@ -283,7 +284,7 @@ function CoursePage() {
                 </button>
               )}
             </div>
-            <p style={{ color: '#666' }}>{module.description}</p>
+            <p style={{ color: '#666' }}>{truncateText(module.description, 60)}</p>
             
             {user.role === 'TEACHER' && (
               <div style={{ marginBottom: '15px' }}>
@@ -371,7 +372,7 @@ function CoursePage() {
                       </span>
                     )}
                     <div>
-                      <strong>{lesson.title}</strong>
+                      <strong>{truncateText(lesson.title, 25)}</strong>
                       {lesson.language && (
                         <span style={{ 
                           marginLeft: '10px', 
@@ -385,7 +386,7 @@ function CoursePage() {
                         </span>
                       )}
                       <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                        {lesson.content ? lesson.content.substring(0, 50) + '...' : 'Нет описания'}
+                        {lesson.content ? lesson.content.substring(0, 40) + '...' : 'Нет описания'}
                       </p>
                     </div>
                   </div>

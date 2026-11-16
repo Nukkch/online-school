@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Editor from '@monaco-editor/react'; // Импортируем редактор
+import Editor from '@monaco-editor/react';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 
@@ -13,32 +13,88 @@ function LessonPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // Состояния для песочницы
   const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  // Уникальный ключ для сохранения кода этого урока
+  const storageKey = `code_${courseId}_${lessonId}`;
 
   useEffect(() => {
-    const fetchLesson = async () => {
-      try {
-        const response = await api.get(`/lessons/${lessonId}`);
-        setLesson(response.data);
-        // Инициализируем редактор шаблоном кода из урока
+  const fetchLesson = async () => {
+    try {
+      const response = await api.get(`/lessons/${lessonId}`);
+      setLesson(response.data);
+      
+      const savedCode = localStorage.getItem(storageKey);
+      if (savedCode) {
+        setCode(savedCode);
+      } else {
         setCode(response.data.codeTemplate || '// Напишите ваш код здесь');
-        
-        if (user.role === 'STUDENT') {
-          const progressResponse = await api.get(`/progress/course/${courseId}`);
-          const completed = progressResponse.data.find(p => p.lessonId === parseInt(lessonId))?.completed;
-          setIsCompleted(completed || false);
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error('Ошибка загрузки урока:', err);
-        setLoading(false);
       }
-    };
-    fetchLesson();
-  }, [lessonId, courseId, user]);
+      
+      if (user.role === 'STUDENT') {
+        try {
+          // Получаем все записи студента
+          const enrollmentsResponse = await api.get('/enrollments/my');
+          const enrollments = enrollmentsResponse.data;
+          
+          // Проверяем, есть ли текущий курс в списке
+          const enrolled = enrollments.some(e => e.courseId === parseInt(courseId));
+          setIsEnrolled(enrolled);
+          
+          if (enrolled) {
+            const progressResponse = await api.get(`/progress/course/${courseId}`);
+            const completed = progressResponse.data.find(p => p.lessonId === parseInt(lessonId))?.completed;
+            setIsCompleted(completed || false);
+          }
+        } catch (err) {
+          console.error('Ошибка проверки записей:', err);
+          setIsEnrolled(false);
+          setIsCompleted(false);
+        }
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Ошибка загрузки урока:', err);
+      setLoading(false);
+    }
+  };
+  fetchLesson();
+}, [lessonId, courseId, user, storageKey]);
+
+  // Сохраняем код при каждом изменении
+  const handleCodeChange = (value) => {
+    setCode(value);
+    localStorage.setItem(storageKey, value);
+  };
+
+const handleEnroll = async () => {
+  try {
+    await api.post(`/enrollments/courses/${courseId}`);
+    setIsEnrolled(true);
+    alert('Вы успешно записались на курс!');
+    
+    // После записи сразу загружаем прогресс
+    const progressResponse = await api.get(`/progress/course/${courseId}`);
+    const completed = progressResponse.data.find(p => p.lessonId === parseInt(lessonId))?.completed;
+    setIsCompleted(completed || false);
+  } catch (err) {
+    const message = err.response?.data?.message || err.response?.data || 'Ошибка записи на курс';
+    alert(message);
+  }
+};
+
+  // Сброс кода к шаблону
+  const handleResetCode = () => {
+    if (window.confirm('Сбросить код к исходному шаблону? Несохраненные изменения будут потеряны.')) {
+      const templateCode = lesson.codeTemplate || '// Напишите ваш код здесь';
+      setCode(templateCode);
+      localStorage.setItem(storageKey, templateCode);
+      setOutput(''); // Очищаем консоль
+    }
+  };
 
   const handleToggleProgress = async () => {
     try {
@@ -59,7 +115,6 @@ function LessonPage() {
         stdin: ''
       });
       
-      // Формируем красивый вывод
       let resultText = '';
       if (response.data.status === 3) {
         resultText = `✅ Успешно выполнено!\nВремя: ${response.data.time}с, Память: ${response.data.memory} КБ\n\n--- Вывод ---\n${response.data.output}`;
@@ -88,9 +143,8 @@ function LessonPage() {
 
       <h1>{lesson.title}</h1>
       
-      {/* Контент урока */}
       <div style={{ 
-        backgroundColor: '#fff', padding: '20px', borderRadius: '8px', 
+        backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '8px', 
         border: '1px solid #ddd', marginBottom: '30px', lineHeight: '1.6' 
       }}>
         {lesson.content}
@@ -100,24 +154,40 @@ function LessonPage() {
       <div style={{ marginBottom: '30px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <h3 style={{ margin: 0 }}>🖥️ Песочница ({lesson.language || 'java'})</h3>
-          <button
-            onClick={handleRunCode}
-            disabled={isRunning}
-            style={{
-              padding: '8px 20px',
-              backgroundColor: isRunning ? '#ccc' : '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isRunning ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            {isRunning ? '⏳ Выполняется...' : '▶ Выполнить код'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleResetCode}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🔄 Сбросить
+            </button>
+            <button
+              onClick={handleRunCode}
+              disabled={isRunning}
+              style={{
+                padding: '8px 20px',
+                backgroundColor: isRunning ? '#ccc' : '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isRunning ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {isRunning ? '⏳ Выполняется...' : '▶ Выполнить код'}
+            </button>
+          </div>
         </div>
 
         {/* Редактор кода Monaco */}
@@ -127,7 +197,7 @@ function LessonPage() {
             language={lesson.language === 'javascript' ? 'javascript' : lesson.language || 'java'}
             theme="vs-dark"
             value={code}
-            onChange={(value) => setCode(value)}
+            onChange={handleCodeChange}
             options={{
               minimap: { enabled: false },
               fontSize: 14,
@@ -156,24 +226,43 @@ function LessonPage() {
         </div>
       </div>
 
-      {/* Прогресс (только для студентов) */}
       {user.role === 'STUDENT' && (
-        <button
-          onClick={handleToggleProgress}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: isCompleted ? '#4CAF50' : '#2196F3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            width: '100%'
-          }}
-        >
-          {isCompleted ? '✅ Урок пройден' : 'Отметить урок как пройденный'}
-        </button>
-      )}
+  <div style={{ marginTop: '20px' }}>
+    {isEnrolled ? (
+      <button
+        onClick={handleToggleProgress}
+        style={{
+          padding: '12px 24px',
+          backgroundColor: isCompleted ? '#4CAF50' : '#2196F3',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '16px',
+          width: '100%'
+        }}
+      >
+        {isCompleted ? 'Урок пройден' : 'Отметить урок как пройденный'}
+      </button>
+    ) : (
+      <button
+        onClick={handleEnroll}
+        style={{
+          padding: '12px 24px',
+          backgroundColor: '#FF9800',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '16px',
+          width: '100%'
+        }}
+      >
+        Записаться на курс, чтобы отмечать прогресс
+      </button>
+    )}
+  </div>
+)}
     </div>
   );
 }
